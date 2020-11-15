@@ -46,7 +46,7 @@ export const MainPage = ({ history, match }) => {
     return (
         <MainPageWrapper>
             <h1>CLX Boards</h1>
-            <CustomRow>
+            <CustomRow style={{ flexFlow: "wrap" }}>
                 <Button className="create-board-btn" onClick={() => {
                     let key = Date.now().toString(6)
                     history.push(`/board/${key}`)

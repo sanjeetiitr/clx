@@ -4,33 +4,22 @@ import { CanvasNavigation } from "../Component/CanvasNavigation";
 import { CanvasToolBar } from "../Component/CanvasToolBar";
 
 const CanvasPlaygroundWrapper = styled.div`
-    
-`
-let imagesArray = []
-let step = -1
-
-
-const hexToRGB = (hex, alpha) => {
-    var r = parseInt(hex.slice(1, 3), 16),
-        g = parseInt(hex.slice(3, 5), 16),
-        b = parseInt(hex.slice(5, 7), 16);
-
-    if (alpha) {
-        return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
-    } else {
-        return "rgb(" + r + ", " + g + ", " + b + ")";
+    .highter-canvas{
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index : 1;
+        opacity : 0.5
     }
-}
+`
 
-
-
-export const CanvasPlaygroundContainer = ({ ...props }) => {
-
-
-
-
+export const CanvasPlaygroundContainer = ({ history, match, ...props }) => {
+    let boards = window.localStorage.getItem("boards") ? JSON.parse(window.localStorage.getItem("boards")) : {}
     const canvasRef = useRef(null)
-    const contextRef = useRef(null);
+    const maincanvasContextRef = useRef(null);
+    const highlighterCanvasRef = useRef(null)
+    const highlighterContextRef = useRef(null);
+
     const [isDrawing, setIsDrawing] = useState(false)
     const [selectedTool, setSelectedTool] = useState(undefined)
     const [color, setColor] = useState("#000000")
@@ -38,110 +27,110 @@ export const CanvasPlaygroundContainer = ({ ...props }) => {
 
 
     useEffect(() => {
-        const canvas = canvasRef.current
-        canvas.width = window.innerWidth * 2
-        canvas.height = window.innerHeight * 2
-        canvas.style.width = `${window.innerWidth}px`;
-        canvas.style.height = `${window.innerHeight}px`;
+        const maincanvas = canvasRef.current
+        const width = window.innerWidth
+        const height = window.innerHeight
 
-        const context = canvas.getContext("2d");
-        context.scale(2, 2)
-        context.lineCap = "round";
-        context.strokeStyle = color;
-        context.lineWidth = strokeValue;
-        contextRef.current = context;
+        maincanvas.width = width * 2
+        maincanvas.height = height * 2
+        maincanvas.style.width = `${width}px`;
+        maincanvas.style.height = `${height}px`;
+
+        const maincontext = maincanvas.getContext("2d");
+        maincontext.scale(2, 2)
+        maincontext.lineCap = "round";
+        maincontext.strokeStyle = color;
+        maincontext.globalAlpha = 1;
+        maincontext.lineWidth = strokeValue;
+        maincanvasContextRef.current = maincontext;
+
+        //highlighter canvas 
+
+        const highlighterCanvas = highlighterCanvasRef.current
+        highlighterCanvas.width = width * 2
+        highlighterCanvas.height = height * 2
+        highlighterCanvas.style.width = `${width}px`;
+        highlighterCanvas.style.height = `${height}px`;
+
+        const highlighterContext = highlighterCanvas.getContext("2d");
+        highlighterContext.scale(2, 2)
+        highlighterContext.lineCap = "round";
+        highlighterContext.strokeStyle = color;
+        highlighterContext.globalAlpha = 0.5;
+        highlighterContext.lineWidth = strokeValue;
+        highlighterContextRef.current = highlighterContext;
+
+        //Draw image if it exists
+        let boardData = boards[match.params.id]
+        let imageData = boardData.image
+        if (boardData && boardData.image && canvasRef && imageData) {
+            const canvasPic = new Image();
+            canvasPic.src = imageData;
+            canvasPic.onload = function () {
+                maincanvasContextRef.current.drawImage(canvasPic, 0, 0, canvasPic.width, canvasPic.height, 0, 0, canvasRef.current.width / 2, canvasRef.current.height / 2);
+            }
+        }
 
     }, [])
 
     useEffect(() => {
-        if (selectedTool === "MARKER") {
-            console.log(hexToRGB(color, .4), "sasasasasa")
-            let val = `#80${color.slice(1, color.length - 1)}`
-            contextRef.current.strokeStyle = hexToRGB(color, .4)
-            contextRef.current.fillStyle = hexToRGB(color, .4)
-            // contextRef.current.globalCompositeOperation = 'destination-in';
-            // contextRef.current.globalAlpha = .5
-            contextRef.current.lineWidth = 5
-        }
+        highlighterContextRef.current.clearRect(0, 0, highlighterCanvasRef.current.width, highlighterCanvasRef.current.height);
     }, [selectedTool])
 
-    const pushCanvasData = () => {
-        step++
-        if (step < imagesArray.length) { imagesArray.length = step; }
-        let data = canvasRef.current.toDataURL("image/png")
-        console.log(data)
-
-        imagesArray.push(data);
-    }
-
-    function undoCanvasData() {
-        if (step >= 0) {
-            // step--;
-            var canvasPic = new Image();
-            canvasPic.src = imagesArray[step];
-            canvasPic.onload = function () {
-                ClearCanvas()
-                contextRef.current.drawImage(canvasPic, 0, 0, canvasPic.width, canvasPic.height, 0, 0, canvasRef.current.width / 2, canvasRef.current.height / 2);
-            }
-        } else {
-            ClearCanvas()
-        }
-    }
-
     const ClearCanvas = () => {
-        contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        maincanvasContextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        highlighterContextRef.current.clearRect(0, 0, highlighterCanvasRef.current.width, highlighterCanvasRef.current.height);
     }
-
 
     const LineDraw = (offsetX, offsetY) => {
-        contextRef.current.lineTo(offsetX, offsetY)
-        contextRef.current.stroke()
+        maincanvasContextRef.current.lineTo(offsetX, offsetY)
+        maincanvasContextRef.current.stroke()
     }
 
     const HighlighterDraw = (offsetX, offsetY) => {
-        contextRef.current.lineTo(offsetX, offsetY)
-        contextRef.current.stroke()
+        highlighterContextRef.current.lineWidth = 5
+        highlighterContextRef.current.lineTo(offsetX, offsetY)
+        highlighterContextRef.current.stroke()
     }
-
 
     const OnStartDrawing = ({ nativeEvent }) => {
         const { offsetX, offsetY } = nativeEvent
         if (selectedTool === "MARKER") {
-            console.log(hexToRGB(color, .4), "sasasasasa")
-            let val = `#80${color.slice(1, color.length - 1)}`
-            // contextRef.current.strokeStyle = "#f2d9d9"
-            // contextRef.current.fillStyle = "#f2d9d9"
-            contextRef.current.globalCompositeOperation = 'overlay';
+            highlighterContextRef.current.clearRect(0, 0, highlighterCanvasRef.current.width, highlighterCanvasRef.current.height);
+        }
 
-            contextRef.current.lineWidth = 5
-        }
-        if (selectedTool === "MARKER") {
-            undoCanvasData()
-        }
-        contextRef.current.beginPath()
-        contextRef.current.moveTo(offsetX, offsetY)
+        //main canvas 
+        maincanvasContextRef.current.beginPath()
+        maincanvasContextRef.current.moveTo(offsetX, offsetY)
+
+        //highlighter canvas 
+        highlighterContextRef.current.beginPath()
+        highlighterContextRef.current.moveTo(offsetX, offsetY)
+
         setIsDrawing(true)
-        let data = canvasRef.current.toDataURL("image/png")
-        window.localStorage.setItem('key', data);
+
     }
 
     const OnEndDrawing = ({ nativeEvent }) => {
-        // console.log(nativeEvent)
-        contextRef.current.closePath()
+        //main canvas 
+        maincanvasContextRef.current.closePath()
+
+        //highlighter canvas 
+        highlighterContextRef.current.closePath()
+
         setIsDrawing(false)
-        if (selectedTool === "MARKER") {
-            // undoCanvasData()
+        let imageData = canvasRef.current.toDataURL("image/png")
+        let boardObj = boards[match.params.id]
+        if (!boardObj) {
+            boards[match.params.id] = { title: `Board ${Object.keys(boards).length + 1}`, image: imageData }
+        } else {
+            boardObj["image"] = imageData
+            boards[match.params.id] = boardObj
         }
-        if (selectedTool === "PEN") {
-            pushCanvasData()
-        }
-        if (selectedTool === "ERASER") {
-            pushCanvasData()
-        }
+        window.localStorage.setItem("boards", JSON.stringify(boards));
     }
 
     const OnDraw = ({ nativeEvent }) => {
-        // console.log(nativeEvent)
         const { offsetX, offsetY } = nativeEvent
         if (!isDrawing) {
             return
@@ -152,26 +141,25 @@ export const CanvasPlaygroundContainer = ({ ...props }) => {
                 HighlighterDraw(offsetX, offsetY)
             }
             else if (selectedTool === "ERASER") {
-                contextRef.current.clearRect(offsetX, offsetY, 10, 10);
+                maincanvasContextRef.current.clearRect(offsetX, offsetY, 10, 10);
             }
         }
     }
 
     const SetStrokeColor = (value) => {
         setColor(value)
-        contextRef.current.strokeStyle = value
+        maincanvasContextRef.current.strokeStyle = value
+        highlighterContextRef.current.strokeStyle = value
     }
 
     const SetStrokeValue = (value) => {
         setStrokeValue(value)
-        contextRef.current.lineWidth = value;
+        maincanvasContextRef.current.lineWidth = value;
     }
 
 
-    console.log(imagesArray, step, color, "imagesArray")
-
     return (<CanvasPlaygroundWrapper>
-        <CanvasNavigation />
+        <CanvasNavigation history={history} title={boards[match.params.id].title} />
         <CanvasToolBar
             selectedTool={selectedTool}
             onClick={setSelectedTool}
@@ -185,6 +173,13 @@ export const CanvasPlaygroundContainer = ({ ...props }) => {
             onMouseUp={OnEndDrawing}
             onMouseMove={OnDraw}
             ref={canvasRef}
+        />
+        <canvas
+            className="highter-canvas"
+            onMouseDown={OnStartDrawing}
+            onMouseUp={OnEndDrawing}
+            onMouseMove={OnDraw}
+            ref={highlighterCanvasRef}
         />
     </CanvasPlaygroundWrapper>)
 }

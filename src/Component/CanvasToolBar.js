@@ -1,6 +1,6 @@
 import { useState } from "react"
 import styled from "styled-components"
-import { CustomColumn, CustomButton, CustomRow } from "../Styles/StyledComponentGlobalStyle"
+import { CustomButton, CustomRow } from "../Styles/StyledComponentGlobalStyle"
 import CircleStrokeIcon from "../SvgComponents/CircleStrokeIcon"
 import DeleteIcon from "../SvgComponents/DeleteIcon"
 import EraserIcon from "../SvgComponents/EraserIcon"
@@ -23,6 +23,7 @@ const CanvasToolWrapper = styled.div`
         width : 24px !important;
         cursor : pointer;
     }
+
     .pen-tool-extend-options{
         position : absolute;
         left : 50px;
@@ -51,7 +52,6 @@ export const CanvasToolBar = ({ selectedTool, onClick, clearCanvas, setColor, se
         onClick(value)
     }
 
-
     return (<CanvasToolWrapper>
         <CustomButton
             onClick={() => {
@@ -62,10 +62,26 @@ export const CanvasToolBar = ({ selectedTool, onClick, clearCanvas, setColor, se
         >
             <PencilIcon height="24" width="24" />
         </CustomButton>
-        <CustomButton onClick={() => handleToobarItemsClick("MARKER")} className={`${selectedTool === "MARKER" && "selected"}`}><MarkerIcon height="24" width="24" /></CustomButton>
-        <CustomButton onClick={() => handleToobarItemsClick("ERASER")} className={`${selectedTool === "ERASER" && "selected"}`}><EraserIcon height="24" width="24" /></CustomButton>
-        <CustomButton onClick={clearCanvas}><DeleteIcon height="24" width="24" /></CustomButton>
-        <CustomButton ><input onChange={(e) => setColor(e.target.value)} type="color" /></CustomButton>
+        <CustomButton
+            onClick={() => handleToobarItemsClick("MARKER")}
+            className={`${selectedTool === "MARKER" && "selected"}`}
+        >
+            <MarkerIcon height="24" width="24" />
+        </CustomButton>
+        <CustomButton
+            onClick={() => handleToobarItemsClick("ERASER")}
+            className={`${selectedTool === "ERASER" && "selected"}`}
+        >
+            <EraserIcon height="24" width="24" />
+        </CustomButton>
+        <CustomButton
+            onClick={clearCanvas}
+        >
+            <DeleteIcon height="24" width="24" />
+        </CustomButton>
+        <CustomButton >
+            <input onChange={(e) => setColor(e.target.value)} type="color" />
+        </CustomButton>
         {strokeOptionsVisiblity && <CustomRow className="pen-tool-extend-options">
             <CustomButton onClick={() => handleStrokeOptionClick(1)}>
                 <CircleStrokeIcon style={{ fill: color }} height="10" width="10" />
